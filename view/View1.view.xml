@@ -1,0 +1,74 @@
+<mvc:View
+    controllerName="sap.btp.sapui5.controller.View1"
+    xmlns:mvc="sap.ui.core.mvc"
+    displayBlock="true"
+    xmlns="sap.m"
+    xmlns:core="sap.ui.core"
+    xmlns:unified="sap.ui.unified"
+>
+	<VBox class="sapUiSmallMargin">
+        <PlanningCalendar
+			id="PC1"
+			startDate="{path: '/startDate'}"
+			rows="{path: '/people'}"
+			appointmentsVisualization="Filled"
+			appointmentSelect="handleAppointmentSelect"
+			showEmptyIntervalHeaders="false"
+            stickyHeader="true"
+			showWeekNumbers="true"
+            intervalSelect="handleAppointmentAddWithContext">
+            <toolbarContent>
+				<Title text="Планировщик задач" titleStyle="H4"/>
+                <Button id="addButton" icon="sap-icon://add" press="handleAppointmentCreate" tooltip="Добавить задачу"/>
+                <Button id="addUserButton" icon="sap-icon://add-employee" press="handleUserCreate" tooltip="Добавить сотрудника"/>
+                <Label text="Вы вошли как" />
+				<Select
+						id="userRole"
+						change="handleRoleChange"
+						selectedKey="admin"
+						width="151px">
+					<items>
+						<core:Item key="admin" text="Руководитель" />
+						<core:Item key="manager" text="Менеджер" />
+					</items>
+				</Select>
+			</toolbarContent>
+			<rows>
+				<PlanningCalendarRow				
+					title="{name}"
+                    text="{role}"
+                    nonWorkingDays="{freeDays}"
+					nonWorkingHours= "{freeHours}"
+                    enableAppointmentsDragAndDrop="{path:'name', formatter:'.canModifyAppointments'}"
+				    enableAppointmentsResize="{path:'name', formatter:'.canModifyAppointments'}"
+					enableAppointmentsCreate="{path:'name', formatter:'.canModifyAppointments'}"
+					appointmentDrop="handleAppointmentDrop"
+					appointmentDragEnter="handleAppointmentDragEnter"
+					appointmentResize="handleAppointmentResize"
+					appointmentCreate="handleAppointmentCreate1"
+					appointments="{path : 'appointments', templateShareable: false}"
+                    intervalHeaders="{path: 'headers', templateShareable: false}">				
+					<appointments>
+						<unified:CalendarAppointment
+							startDate="{start}"
+							endDate="{end}"							
+							title="{title}"
+							text="{info}"
+							type="{type}"
+							tentative="{tentative}">
+						</unified:CalendarAppointment>
+					</appointments>
+                    <intervalHeaders>
+						<unified:CalendarAppointment
+								startDate="{start}"
+								endDate="{end}"
+								icon="{pic}"
+								title="{title}"
+								type="{type}">
+						</unified:CalendarAppointment>
+					</intervalHeaders>
+				</PlanningCalendarRow>
+			</rows>
+		</PlanningCalendar>	
+    </VBox>
+</mvc:View>

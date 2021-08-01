@@ -1,0 +1,21 @@
+<core:FragmentDefinition
+		xmlns:l="sap.ui.layout"
+		xmlns:core="sap.ui.core"
+		xmlns="sap.m">
+	<Dialog id="createDialog1">
+		<beginButton>
+			<Button text="Сохранить" type="Emphasized" press="handleDialogSaveButton1"/>
+		</beginButton>
+		<endButton>
+			<Button text="Отменить" press="handleDialogCancelButton1"/>
+		</endButton>
+		<l:VerticalLayout
+			class="sapUiContentPadding"
+			width="100%">
+			<Label text="Введите имя сотрудника: " labelFor="InputUser"/>
+			<Input id="InputUser" required="true"/>
+			<Label text="Роль сотрудника: " labelFor="inputRole"/>
+			<Input id="inputRole" required="true"/>
+		</l:VerticalLayout>
+	</Dialog>
+</core:FragmentDefinition>
