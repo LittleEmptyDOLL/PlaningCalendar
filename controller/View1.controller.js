@@ -19,8 +19,10 @@ sap.ui.define([
 
 		return Controller.extend("sap.btp.sapui5.controller.View1", {
 			onInit: function () {
+
                 var oModel = new JSONModel();
                 oModel.setData({
+                    startDatePool: new Date("2021", "07", "01", "0", "0"),
                     startDate: new Date("2021", "07", "02", "8", "0"),
                     people: [{
                         name: "Андрей",
@@ -116,17 +118,56 @@ sap.ui.define([
                         ]
 
                     }
-                    ]
+                    ],
+                    appointmentsPool: [
+                        {
+                            start: new Date("2021", "07", "1", "1", "0"),
+                            end: new Date("2021", "07", "1", "2", "0"),
+                            title: "Новая задача",
+                            info: "Задача 1",
+                            type: "Type01",
+                            tentative: false
+                        },
+                        {
+                            start: new Date("2021", "07", "1", "1", "0"),
+                            end: new Date("2021", "07", "1", "2", "0"),
+                            title: "Новая задача 2",
+                            info: "Задача 2",
+                            type: "Type01",
+                            tentative: false
+                        }
+                    ],
+                    peoplePool: [
+                        {
+                            name: "Список задач",
+                            appointments: [
+                                {
+                                    start: new Date("2021", "07", "1", "0", "0"),
+                                end: new Date("2021", "07", "1", "5", "0"),
+                                title: "Новая задача",
+                                info: "Задача 1",                               
+                                type: "Type01",
+                                tentative: false
+                            }
+                        ]
+                        }
+                    ],
+					minDate: new Date(2021, 7, 1, 0, 0, 0),
+					maxDate: new Date(2021, 7, 1, 5, 0, 0),
                 });
                 this.getView().setModel(oModel);
             },
+
+
+
+
 
         _aDialogTypes: [
 				{ title: "Создать задачу", type: "create_appointment" },
 				{ title: "Создать задачу", type: "create_appointment_with_context"},
                 { title: "Редактировать задачу", type: "edit_appointment" }],
         
-        handleAppointmentSelect: function (oEvent) {
+        handleAppointmentSelectPool: function (oEvent) {
 				var oAppointment = oEvent.getParameter("appointment");
 
 				if (oAppointment) {
@@ -141,11 +182,23 @@ sap.ui.define([
 					sPath = "/people/" + this.byId("selectPerson").getSelectedIndex().toString(),
 					oPersonAppointments;
 
-				if (this.byId("isIntervalAppointment").getSelected()){
-					sPath += "/headers";
-				} else {
-					sPath += "/appointments";
-				}
+				
+				sPath += "/appointments";
+
+				oPersonAppointments = oModel.getProperty(sPath);
+
+				oPersonAppointments.push(oAppointment);
+
+				oModel.setProperty(sPath, oPersonAppointments);
+			},
+
+			_addNewAppointmentPool: function(oAppointment){
+				var oModel = this.getView().getModel(),
+					sPath = "/peoplePool/" + this.byId("selectPerson").getSelectedIndex().toString(),
+					oPersonAppointments;
+
+				
+				sPath += "/appointments";
 
 				oPersonAppointments = oModel.getProperty(sPath);
 
@@ -159,12 +212,12 @@ sap.ui.define([
 			},
 
 			handleAppointmentCreate: function () {
-				this._arrangeDialogFragment(this._aDialogTypes[0].type);
+				this._arrangeDialogFragmentPool(this._aDialogTypes[0].type);
 			},
 
-			handleAppointmentAddWithContext: function (oEvent) {
+			handleAppointmentAddWithContextPool: function (oEvent) {
 				this.oClickEventParameters = oEvent.getParameters();
-				this._arrangeDialogFragment(this._aDialogTypes[1].type);
+				this._arrangeDialogFragmentPool(this._aDialogTypes[1].type);
 			},
 
 			_validateDateTimePicker: function (oDateTimePickerStart, oDateTimePickerEnd) {
@@ -266,6 +319,24 @@ sap.ui.define([
 				}.bind(this));
 			},
 
+			_arrangeDialogFragmentPool: function (iDialogType) {
+				var oView = this.getView();
+
+				if (!this._pNewAppointmentDialog) {
+					this._pNewAppointmentDialog = Fragment.load({
+						id: oView.getId(),
+						name: "sap.btp.sapui5.CreatePool",
+						controller: this
+					}).then(function(oDialog) {
+						oView.addDependent(oDialog);
+						return oDialog;
+					});
+				}
+				this._pNewAppointmentDialog.then(function(oDialog) {
+					this._arrangeDialogPool(iDialogType, oDialog);
+				}.bind(this));
+			},
+
 			_arrangeDialog: function(sDialogType, oDialog) {
 				var sTempTitle = "";
 				oDialog._sDialogType = sDialogType;
@@ -287,33 +358,44 @@ sap.ui.define([
 				oDialog.open();
 			},
 
-			handleAppointmentTypeChange: function(oEvent){
-				var oAppointmentType = this.byId("isIntervalAppointment");
+			_arrangeDialogPool: function(sDialogType, oDialog) {
+				var sTempTitle = "";
+				oDialog._sDialogType = sDialogType;
+				if (sDialogType === "edit_appointment"){
+					this._setEditAppointmentDialogContent(oDialog);
+					sTempTitle = this._aDialogTypes[2].title;
+				} else if (sDialogType === "create_appointment_with_context"){
+					this._setCreateWithContextAppointmentDialogContentPool();
+					sTempTitle = this._aDialogTypes[1].title;
+				} else if (sDialogType === "create_appointment"){
+					this._setCreateAppointmentDialogContentPool();
+					sTempTitle = this._aDialogTypes[0].title;
+				} else {
+					Log.error("Неправильный тип диалога.");
+				}
 
-				oAppointmentType.setSelected(oEvent.getSource().getSelected());
+				oDialog.setTitle(sTempTitle);
+				oDialog.open();
 			},
 
 			handleDialogCancelButton: function(){
 				this.byId("createDialog").close();
 			},
 
-			_editAppointment: function(oAppointment, bIsIntervalAppointment, iPersonId, oNewAppointmentDialog){
+			_editAppointment: function(oAppointment, iPersonId, oNewAppointmentDialog){
 				var sAppointmentPath = this._appointmentOwnerChange(oNewAppointmentDialog),
 					oModel = this.getView().getModel();
 
-				if (bIsIntervalAppointment) {
-					this._convertToHeader(oAppointment, iPersonId, oNewAppointmentDialog);
-				} else {
-					if (this.sPath !== sAppointmentPath) {
-						this._addNewAppointment(oNewAppointmentDialog.getModel().getProperty(this.sPath));
-						this._removeAppointment(oNewAppointmentDialog.getModel().getProperty(this.sPath));
-					}
-					oModel.setProperty(sAppointmentPath + "/title", oAppointment.title);
-					oModel.setProperty(sAppointmentPath + "/info", oAppointment.info);
-					oModel.setProperty(sAppointmentPath + "/type", oAppointment.type);
-					oModel.setProperty(sAppointmentPath + "/start", oAppointment.start);
-					oModel.setProperty(sAppointmentPath + "/end", oAppointment.end);
+				
+				if (this.sPath !== sAppointmentPath) {
+					this._addNewAppointment(oNewAppointmentDialog.getModel().getProperty(this.sPath));
+					this._removeAppointment(oNewAppointmentDialog.getModel().getProperty(this.sPath));
 				}
+				oModel.setProperty(sAppointmentPath + "/title", oAppointment.title);
+				oModel.setProperty(sAppointmentPath + "/info", oAppointment.info);
+				oModel.setProperty(sAppointmentPath + "/type", oAppointment.type);
+				oModel.setProperty(sAppointmentPath + "/start", oAppointment.start);
+				oModel.setProperty(sAppointmentPath + "/end", oAppointment.end);
 			},
 
 			_convertToHeader: function(oAppointment, oNewAppointmentDialog){
@@ -330,7 +412,6 @@ sap.ui.define([
 					sInputTitle = this.byId("inputTitle").getValue(),
 					iPersonId = this.byId("selectPerson").getSelectedIndex(),
 					oModel = this.getView().getModel(),
-					bIsIntervalAppointment = this.byId("isIntervalAppointment").getSelected(),
 					oNewAppointmentDialog = this.byId("createDialog"),
 					oNewAppointment;
 
@@ -342,22 +423,15 @@ sap.ui.define([
 								info: sInfoValue,
 								type: this.byId("detailsPopover").getBindingContext().getObject().type,
 								start: oStartDate.getDateValue(),
-								end: oEndDate.getDateValue()}, bIsIntervalAppointment, iPersonId, oNewAppointmentDialog);
+								end: oEndDate.getDateValue()}, iPersonId, oNewAppointmentDialog);
 						} else {
-							if (bIsIntervalAppointment) {
-								oNewAppointment = {
-									title: sInputTitle,
-									start: oStartDate.getDateValue(),
-									end: oEndDate.getDateValue()
-								};
-							} else {
-								oNewAppointment = {
-									title: sInputTitle,
-									info: sInfoValue,
-									start: oStartDate.getDateValue(),
-									end: oEndDate.getDateValue()
-								};
-							}
+							    oNewAppointment = {
+								title: sInputTitle,
+								info: sInfoValue,
+								start: oStartDate.getDateValue(),
+								end: oEndDate.getDateValue()
+                            };
+                            
 							this._addNewAppointment(oNewAppointment);
 					}
 
@@ -365,6 +439,37 @@ sap.ui.define([
 
 					oNewAppointmentDialog.close();
 				}
+			},
+
+			handleDialogSaveButtonPool: function(){
+				var sInfoValue = this.byId("moreInfo").getValue(),
+					sInputTitle = this.byId("inputTitle").getValue(),
+					iPersonId = this.byId("selectPerson").getSelectedIndex(),
+					oModel = this.getView().getModel(),
+					oNewAppointmentDialog = this.byId("createDialog"),
+                    oNewAppointment;
+                    
+					if (this.sPath && oNewAppointmentDialog._sDialogType === "edit_appointment") {
+						this._editAppointment({
+							title: sInputTitle,
+							info: sInfoValue,
+							type: this.byId("detailsPopover").getBindingContext().getObject().type,
+							start: new Date("2021", "07", "1", "0", "0"),
+							end: new Date("2021", "07", "1", "5", "0")}, iPersonId, oNewAppointmentDialog);
+					} else {
+						    oNewAppointment = {
+							title: sInputTitle,
+							info: sInfoValue,
+							start: new Date("2021", "07", "1", "0", "0"),
+							end: new Date("2021", "07", "1", "5", "0")
+                        };
+                        
+						this._addNewAppointmentPool(oNewAppointment);
+					}
+
+					oModel.updateBindings();
+
+					oNewAppointmentDialog.close();
 			},
 
 			_appointmentOwnerChange: function(oNewAppointmentDialog){
@@ -381,8 +486,7 @@ sap.ui.define([
 			},
 
 			_setCreateAppointmentDialogContent: function(){
-				var oAppointmentType = this.byId("isIntervalAppointment"),
-					oDateTimePickerStart = this.byId("startDate"),
+				var oDateTimePickerStart = this.byId("startDate"),
 					oDateTimePickerEnd =  this.byId("endDate"),
 					oTitleInput = this.byId("inputTitle"),
 					oMoreInfoInput = this.byId("moreInfo"),
@@ -396,7 +500,17 @@ sap.ui.define([
 				oDateTimePickerEnd.setValueState(ValueState.None);
 				oTitleInput.setValue("");
 				oMoreInfoInput.setValue("");
-				oAppointmentType.setSelected(false);
+			},
+
+			_setCreateAppointmentDialogContentPool: function(){
+				var oTitleInput = this.byId("inputTitle"),
+					oMoreInfoInput = this.byId("moreInfo"),
+					oPersonSelected = this.byId("selectPerson");
+
+				//Set the person in the first row as selected.
+				oPersonSelected.setSelectedItem(this.byId("selectPerson").getItems()[0]);
+				oTitleInput.setValue("");
+				oMoreInfoInput.setValue("");
 			},
 
 			_setCreateWithContextAppointmentDialogContent: function(){
@@ -407,7 +521,6 @@ sap.ui.define([
 					oEndDate = this.byId("endDate"),
 					oDateTimePickerStart = this.byId("startDate"),
 					oDateTimePickerEnd =  this.byId("endDate"),
-					oAppointmentType = this.byId("isIntervalAppointment"),
 					oTitleInput = this.byId("inputTitle"),
 					oMoreInfoInput = this.byId("moreInfo"),
 					sPersonName,
@@ -429,10 +542,30 @@ sap.ui.define([
 
 				oMoreInfoInput.setValue("");
 
-				oAppointmentType.setSelected(false);
-
 				oDateTimePickerStart.setValueState(ValueState.None);
 				oDateTimePickerEnd.setValueState(ValueState.None);
+
+				delete this.oClickEventParameters;
+			},
+
+			_setCreateWithContextAppointmentDialogContentPool: function(){
+				var aPeople = this.getView().getModel().getProperty('/peoplePool/'),
+					oTitleInput = this.byId("inputTitle"),
+					oMoreInfoInput = this.byId("moreInfo"),
+					sPersonName,
+					oPersonSelected;
+
+				if (this.oClickEventParameters.row){
+					sPersonName = this.oClickEventParameters.row.getTitle();
+					oPersonSelected = this.byId("selectPerson");
+
+					oPersonSelected.setSelectedIndex(aPeople.indexOf(aPeople.filter(function(oPerson){return  oPerson.name === sPersonName;})[0]));
+
+				}
+
+				oTitleInput.setValue("");
+
+				oMoreInfoInput.setValue("");
 
 				delete this.oClickEventParameters;
 			},
@@ -450,8 +583,7 @@ sap.ui.define([
 					oStartDate = this.byId("startDate"),
 					oEndDate = this.byId("endDate"),
 					oMoreInfoInput = this.byId("moreInfo"),
-					oTitleInput = this.byId("inputTitle"),
-					oAppointmentType = this.byId("isIntervalAppointment");
+					oTitleInput = this.byId("inputTitle");
 
 				oPersonSelected.setSelectedIndex(iSelectedPersonId);
 
@@ -465,8 +597,6 @@ sap.ui.define([
 
 				oDateTimePickerStart.setValueState(ValueState.None);
 				oDateTimePickerEnd.setValueState(ValueState.None);
-
-				oAppointmentType.setSelected(false);
 			},
 
 			_handleSingleAppointment: function (oAppointment) {
@@ -554,6 +684,50 @@ sap.ui.define([
 
 
 
+            handleAppointmentDropPool: function (oEvent) {
+				var oAppointment = oEvent.getParameter("appointment"),
+					oStartDate = oEvent.getParameter("startDate"),
+					oEndDate = oEvent.getParameter("endDate"),
+					oCalendarRow = oEvent.getParameter("calendarRow"),
+					bCopy = oEvent.getParameter("copy"),
+					sTitle = oAppointment.getTitle(),
+					oModel = this.getView().getModel(),
+					oAppBindingContext = oAppointment.getBindingContext(),
+                    oRowBindingContext = oCalendarRow.getBindingContext(),
+					handleAppointmentDropBetweenRows = function () {
+						var aPath = oAppBindingContext.getPath().split("/"),
+							iIndex = aPath.pop(),
+							sRowAppointmentsPath = aPath.join("/");
+
+						oRowBindingContext.getObject().appointments.push(
+							oModel.getProperty(oAppBindingContext.getPath())
+						);
+
+						oModel.getProperty(sRowAppointmentsPath).splice(iIndex, 1);
+					};
+
+				if (bCopy) { // "copy" appointment
+					var oProps = Object.assign({}, oModel.getProperty(oAppointment.getBindingContext().getPath()));
+					oProps.start = new Date("2021", "07", "1", "0", "0");
+					oProps.end = new Date("2021", "07", "1", "5", "0");
+
+					oRowBindingContext.getObject().appointments.push(oProps);
+				} else { // "move" appointment
+					oModel.setProperty("start", new Date("2021", "07", "1", "0", "0"), oAppBindingContext);
+					oModel.setProperty("end", new Date("2021", "07", "1", "5", "0"), oAppBindingContext);
+
+					if (oAppointment.getParent() !== oCalendarRow) {
+						handleAppointmentDropBetweenRows();
+					}
+				}
+
+				oModel.refresh(true);
+
+				MessageToast.show("Задача '" + sTitle + "' назначеная на " + oCalendarRow.getTitle() + " теперь начинается в \n" + oStartDate + "\n и заканчивается в \n" + oEndDate + ".");
+			},
+
+
+
 
 
 
@@ -594,7 +768,7 @@ sap.ui.define([
 					sTitle = oAppointment.getTitle(),
 					oModel = this.getView().getModel(),
 					oAppBindingContext = oAppointment.getBindingContext(),
-					oRowBindingContext = oCalendarRow.getBindingContext(),
+                    oRowBindingContext = oCalendarRow.getBindingContext(),
 					handleAppointmentDropBetweenRows = function () {
 						var aPath = oAppBindingContext.getPath().split("/"),
 							iIndex = aPath.pop(),
@@ -664,8 +838,13 @@ sap.ui.define([
 			isAppointmentOverlap: function (oEvent, oCalendarRow) {
 				var oAppointment = oEvent.getParameter("appointment"),
 					oStartDate = oEvent.getParameter("startDate"),
-					oEndDate = oEvent.getParameter("endDate"),
-					bAppointmentOverlapped;
+                    oEndDate = oEvent.getParameter("endDate"),
+                    oPerson = oEvent.getParameter("calendarRow").getProperty("title"),
+
+                    oCurrentPerson = oEvent.getParameter("appointment").getBindingContext().getPath().split("/"),
+                    bNewPerson = oEvent.getParameter("calendarRow").getBindingContext().getPath().split("/"),
+
+                    bAppointmentOverlapped;
 
 				if (this.getUserRole() === this.roles.manager) {
 					bAppointmentOverlapped = oCalendarRow.getAppointments().some(function (oCurrentAppointment) {
@@ -674,7 +853,9 @@ sap.ui.define([
 						}
 
 						var oAppStartTime = oCurrentAppointment.getStartDate().getTime(),
-							oAppEndTime = oCurrentAppointment.getEndDate().getTime();
+							oAppEndTime = oCurrentAppointment.getEndDate().getTime(),
+							oAppPerson = oCurrentAppointment.getEndDate().getTime(),
+                            bPersonOverlapped = oCalendarRow.getProperty("title");
 
 						if (oAppStartTime <= oStartDate.getTime() && oStartDate.getTime() < oAppEndTime) {
 							return true;
@@ -686,7 +867,11 @@ sap.ui.define([
 
 						if (oStartDate.getTime() <= oAppStartTime && oAppStartTime < oEndDate.getTime()) {
 							return true;
-						}
+                        }
+                        
+                        if (oCurrentPerson["2"] !== bNewPerson["2"]) {
+							return true;
+                        }
 					});
 				}
 
@@ -775,7 +960,8 @@ sap.ui.define([
 					    	name: sInputUser,
 					    	role: sInputRole,
                             freeDays: [0, 6],
-						    freeHours: [0, 1, 2, 3, 4, 5, 6, 7, 8, 19, 20, 21, 22, 23],
+                            freeHours: [0, 1, 2, 3, 4, 5, 6, 7, 8, 19, 20, 21, 22, 23],
+                            appointments: []
 					    };
                         this._addNewUser(oNewUser);
 

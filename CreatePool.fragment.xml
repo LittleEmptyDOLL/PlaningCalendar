@@ -4,7 +4,7 @@
 		xmlns="sap.m">
 	<Dialog id="createDialog">
 		<beginButton>
-			<Button text="Сохранить" type="Emphasized" press="handleDialogSaveButton"/>
+			<Button text="Сохранить" type="Emphasized" press="handleDialogSaveButtonPool"/>
 		</beginButton>
 		<endButton>
 			<Button text="Отменить" press="handleDialogCancelButton"/>
@@ -12,31 +12,19 @@
 		<l:VerticalLayout
 			class="sapUiContentPadding"
 			width="100%">
-			<Label text="Выберите сотрудника: " labelFor="selectPerson"/>
+			<Label text="Задача будет создана в списке: " labelFor="selectPerson"/>
 			<Select
 					id="selectPerson"
 					forceSelection="false"
 					change="handleChangeSelect"
 					width="100%"
 					items="{
-						path: '/people'
+						path: '/peoplePool'
 					}">
 				<core:Item key="{name}" text="{name}"/>
 			</Select>
 			<Label text="Заголовок: " labelFor="inputTitle"/>
 			<Input id="inputTitle"/>
-			<Label text="Дата начала: " labelFor="startDate"/>
-			<DateTimePicker
-					id="startDate"
-					displayFormat="short"
-					required="true"
-					change="handleCreateChange"/>
-			<Label text="Дата окончания: " labelFor="endDate"/>
-			<DateTimePicker
-					id="endDate"
-					displayFormat="short"
-					required="true"
-					change="handleCreateChange"/>
 			<Label text="Подробная информация: " labelFor="moreInfo"/>
 			<Input id="moreInfo"/>
 		</l:VerticalLayout>

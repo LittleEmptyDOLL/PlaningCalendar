@@ -19,7 +19,6 @@
             intervalSelect="handleAppointmentAddWithContext">
             <toolbarContent>
 				<Title text="Планировщик задач" titleStyle="H4"/>
-                <Button id="addButton" icon="sap-icon://add" press="handleAppointmentCreate" tooltip="Добавить задачу"/>
                 <Button id="addUserButton" icon="sap-icon://add-employee" press="handleUserCreate" tooltip="Добавить сотрудника"/>
                 <Label text="Вы вошли как" />
 				<Select
@@ -69,6 +68,74 @@
 					</intervalHeaders>
 				</PlanningCalendarRow>
 			</rows>
-		</PlanningCalendar>	
+		</PlanningCalendar>
+    </VBox>
+    <VBox class="sapUiSmallMargin">
+        <PlanningCalendar
+			id="PC2"
+			startDate="{path: '/startDatePool'}"
+            minDate="{path: '/minDate'}"
+			maxDate="{path: '/maxDate'}"
+            viewKey="A"
+			rows="{path: '/peoplePool'}"
+			appointmentsVisualization="Filled"
+			appointmentSelect="handleAppointmentSelectPool"
+			showEmptyIntervalHeaders="false"
+            stickyHeader="true"
+			showWeekNumbers="true"
+            intervalSelect="handleAppointmentAddWithContextPool">
+            <toolbarContent>
+				<Title text="Список заплонированных задач" titleStyle="H4"/>
+                <Button id="addButton" icon="sap-icon://add" press="handleAppointmentCreate" tooltip="Добавить задачу"/>
+                <DatePicker ></DatePicker>
+			</toolbarContent>
+			<views>
+				<PlanningCalendarView
+					key="A"
+					intervalType="Hour"
+					description="hours view"
+					intervalsS="2"
+					intervalsM="4"
+					intervalsL="6"
+					showSubIntervals="true">
+				</PlanningCalendarView>
+			</views>
+			<rows>
+				<PlanningCalendarRow				
+					title="{name}"
+                    text="{role}"
+                    nonWorkingDays="{freeDays}"
+					nonWorkingHours= "{freeHours}"
+                    enableAppointmentsDragAndDrop="{path:'name', formatter:'.canModifyAppointments'}"
+				    enableAppointmentsResize="{path:'name', formatter:'.canModifyAppointments'}"
+					enableAppointmentsCreate="{path:'name', formatter:'.canModifyAppointments'}"
+					appointmentDrop="handleAppointmentDropPool"
+					appointmentDragEnter="handleAppointmentDragEnter"
+					appointmentResize="handleAppointmentResize"
+					appointmentCreate="handleAppointmentCreate1"
+					appointments="{path : 'appointments', templateShareable: false}"
+                    intervalHeaders="{path: 'headers', templateShareable: false}">				
+					<appointments>
+						<unified:CalendarAppointment
+							startDate="{start}"
+							endDate="{end}"							
+							title="{title}"
+							text="{info}"
+							type="{type}"
+							tentative="{tentative}">
+						</unified:CalendarAppointment>
+					</appointments>
+                    <intervalHeaders>
+						<unified:CalendarAppointment
+								startDate="{start}"
+								endDate="{end}"
+								icon="{pic}"
+								title="{title}"
+								type="{type}">
+						</unified:CalendarAppointment>
+					</intervalHeaders>
+				</PlanningCalendarRow>
+			</rows>
+		</PlanningCalendar>
     </VBox>
 </mvc:View>
